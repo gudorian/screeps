@@ -1,0 +1,6 @@
+{
+    "dependencies": {
+        "gulp": "^3.9.1",
+        "gulp-screeps": "^1.0.8"
+    }
+}
