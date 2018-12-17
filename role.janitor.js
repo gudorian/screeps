@@ -1,10 +1,9 @@
-const roleUpgrader = require('role.upgrader');
+const jobWorker = require('job.worker');
 
 const roleJanitor = {
 
     /** @param {Creep} creep **/
     run: function (creep) {
-
         if (creep.memory.reparing && creep.carry.energy === 0) {
             creep.memory.reparing = false;
             creep.say('🔄 harvest');
@@ -26,13 +25,13 @@ const roleJanitor = {
                     }
                 }
                 let closestDamagedStructure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                    filter: (structure) => (structure.hits / structure.hitsMax) <= 0.6
+                    filter: (structure) => structure.hits < Math.min(structure.hitsMax, 50000) //(structure.hits / structure.hitsMax) <= 0.6
                         && [STRUCTURE_ROAD, STRUCTURE_WALL].indexOf(structure.structureType) === -1
                         && assignedTargets.indexOf(structure.id) === -1
                 });
                 if (!closestDamagedStructure) {
                     closestDamagedStructure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                        filter: (structure) => (structure.hits / structure.hitsMax) <= 0.8
+                        filter: (structure) => structure.hits < Math.min(structure.hitsMax, 50000) //(structure.hits / structure.hitsMax) <= 0.8
                                             && assignedTargets.indexOf(structure.id) === -1
                     });
                 }
@@ -61,13 +60,19 @@ const roleJanitor = {
                     creep.memory.targetId = null;
                 }
             } else {
-                creep.say('Nothing to fix, run 🚧 build');
-                roleUpgrader.run(creep);
+                //creep.say('Nothing to fix, run 🚧 build');
+                //roleUpgrader.run(creep);
             }
         }
         else {
             //creep.memory.sourceId = null;
-            let source = Game.getObjectById(creep.memory.sourceId);
+            creep.memory.targetId = null;
+            jobWorker.jobCollectEnergy(creep);
+            if (creep.memory.sourceId === null) {
+                jobWorker.jobLootEnergy(creep);
+            }
+
+            /*let source = Game.getObjectById(creep.memory.sourceId);
             if (!source) {
                 source = creep.pos.findClosestByPath(FIND_SOURCES);
                 if (!source || source.id) {
@@ -77,7 +82,7 @@ const roleJanitor = {
             }
             if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
                 creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
-            }
+            }*/
         }
     }
 };

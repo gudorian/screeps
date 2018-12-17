@@ -1,3 +1,4 @@
+const jobWorker = require('job.worker');
 const roleUpgrader = require('role.upgrader');
 
 const roleBuilder = {
@@ -45,7 +46,8 @@ const roleBuilder = {
         }
         else {
             //creep.memory.targetId = null;
-            let source = Game.getObjectById(creep.memory.sourceId);
+            jobWorker.jobCollectEnergy(creep);
+            /*let source = Game.getObjectById(creep.memory.sourceId);
             if (!source) {
                 source = creep.pos.findClosestByPath(FIND_SOURCES);
                 if (!source || source.id) {
@@ -55,7 +57,7 @@ const roleBuilder = {
             }
             if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
                 creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
-            }
+            }*/
         }
     }
 };
