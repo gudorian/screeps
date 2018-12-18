@@ -1,10 +1,12 @@
 const ui = require('room.ui');
 const roomQueue = {
     energySites: {},
-    mineralSites: [],
+    mineralSites: {},
     constructionSites: [],
+    hostileCreeps: [],
 };
 let roomQueues = {};
+let creepHeatmaps = {};
 
 const canMoveToPos = (room, x, y) => {
     let roomPos = new RoomPosition(x, y, room.name);
@@ -51,7 +53,7 @@ const findEnergySites = (room) => {
     let sources = room.find(FIND_SOURCES);
     let claimedSources = getClaimedSites(room, 'sourceId');
     //console.log(claimedSources);
-    let energySites = {};
+    let energySites = { total: 0};
     sources.map(source => {
         room.visual.circle(source.pos,
             {fill: 'blue', radius: 0.55, stroke: 'lightblue'});
@@ -71,6 +73,9 @@ const findEnergySites = (room) => {
         }
         getSurroundingCoordinates(source.pos.x, source.pos.y).map(pos => {
             //console.log('energy_left', source.energy > 0);
+            if (canMoveToPos(room, pos.x, pos.y)) {
+                energySites['total'] = energySites['total'] + 1;
+            }
             if (source.energy > 0) {
                 //console.log('claimed', claimedSources.indexOf(source.id) === -1);
                 if (canMoveToPos(room, pos.x, pos.y) && claimedSources.indexOf(source.id) === -1) {
@@ -120,12 +125,23 @@ const getClaimedSites = (room, jobType) => {
     return assignedSites;
 };
 
+const findConstructionSites = (room) => {
+    return room.find(FIND_CONSTRUCTION_SITES) || [];
+};
+
+const findHostileCreeps = (room) => {
+    return room.find(FIND_HOSTILE_CREEPS) || [];
+};
+
 const queues = {
 
     run: (roomName) => {
         const room = Game.rooms[roomName];
         let tempRoomQueue = {...roomQueue};
         tempRoomQueue['energySites'] = findEnergySites(room);
+        tempRoomQueue['constructionSites'] = findConstructionSites(room);
+        tempRoomQueue['hostileCreeps'] = findHostileCreeps(room);
+        //console.log('hostiles', tempRoomQueue['hostileCreeps'].length);
 
         roomQueues = {...roomQueues, [room.name]: tempRoomQueue};
         //console.log(JSON.stringify(roomQueues));
@@ -133,6 +149,23 @@ const queues = {
 
     getRoomQueue(room) {
         return roomQueues[room] || roomQueue;
+    },
+
+    getCreepHeatmap(roomName) {
+        return creepHeatmaps[roomName] || {};
+
+    },
+
+    feedCreepHeatmap: (roomName, x, y) => {
+        let tempCreepHeatmap = {...creepHeatmaps[roomName]};
+        let cordKey = x + '_' + y;
+        if (tempCreepHeatmap[cordKey]) {
+            tempCreepHeatmap[cordKey] = tempCreepHeatmap[cordKey] + 1;
+        } else {
+            tempCreepHeatmap[cordKey] = 1;
+        }
+
+        creepHeatmaps = {...creepHeatmaps, [roomName]: tempCreepHeatmap};
     }
 
 };

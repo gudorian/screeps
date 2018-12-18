@@ -27,6 +27,7 @@ const jobHarvest = (creep) => {
         creep.memory.sourceId = null;
     }
     if (!source) {
+        // TODO: Fix this hacky thing, it works but the real issue is in queues
         if (sources.length > 1) {
             source = Game.getObjectById(sources[1]);
             creep.memory.sourceId = (source && source.id) ? source.id : null;
@@ -42,37 +43,49 @@ const jobCollectEnergy = (creep) => {
     /*
         let energySites = roomQueues.getRoomQueue(creep.room.name).energySites;
     */
-    let source = Game.getObjectById(creep.memory.sourceId);
-    if (!source) {
-        /*
-                let sources = Object.keys(energySites);
-        */
-        source = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (structure) => {
-                return (structure.structureType === STRUCTURE_CONTAINER
-                    || structure.structureType === STRUCTURE_STORAGE
-                ) && _.sum(structure.store) > creep.carryCapacity;
-            }
-        });
-        creep.memory.sourceId = (source && source.id) ? source.id : null;
-        /*
-        if (sources.length > 0) {
-            source = creep.memory.sourceId =  Game.getObjectById(sources[0]);
-            roomQueues.run(creep.room.name);
-        }*/
-    }
-    let withdraw = creep.withdraw(source, RESOURCE_ENERGY);
-    if (source && withdraw === ERR_NOT_IN_RANGE) {
-        let moved = creep.moveTo(source, {visualizePathStyle: {stroke: '#dd44cf'}});
-        if (moved === ERR_NO_PATH) {
-            source = null;
+    let allStructures = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (structure) => {
+            return (structure.structureType === STRUCTURE_CONTAINER
+                || structure.structureType === STRUCTURE_STORAGE);
         }
-    }
-    if ([ERR_NOT_ENOUGH_RESOURCES, ERR_FULL, ERR_INVALID_ARGS].indexOf(withdraw) !== -1) {
-        creep.memory.sourceId = null;
-    }
-    if (!source) {
-        creep.say('No 🔋 stored')
+    });
+    if (!allStructures) { // Harvest if no storage/containers
+        jobHarvest(creep);
+    } else {
+        let source = Game.getObjectById(creep.memory.sourceId);
+        if (!source) {
+            /*
+                    let sources = Object.keys(energySites);
+            */
+            source = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                filter: (structure) => {
+                    return (structure.structureType === STRUCTURE_CONTAINER
+                        || structure.structureType === STRUCTURE_STORAGE
+                    ) && _.sum(structure.store) > creep.carryCapacity;
+                }
+            });
+            creep.memory.sourceId = (source && source.id) ? source.id : null;
+            /*
+            if (sources.length > 0) {
+                source = creep.memory.sourceId =  Game.getObjectById(sources[0]);
+                roomQueues.run(creep.room.name);
+            }*/
+        }
+        let withdraw = creep.withdraw(source, RESOURCE_ENERGY);
+        if (source && withdraw === ERR_NOT_IN_RANGE) {
+            let moved = creep.moveTo(source, {visualizePathStyle: {stroke: '#dd44cf'}});
+            if (moved === ERR_NO_PATH) {
+                source = null;
+            }
+        }
+        if ([ERR_NOT_ENOUGH_RESOURCES, ERR_FULL, ERR_INVALID_ARGS].indexOf(withdraw) !== -1) {
+            creep.memory.sourceId = null;
+        }
+        if (!source) {
+            creep.memory.targetId = null;
+            creep.say('No 🔋 stored');
+
+        }
     }
 };
 

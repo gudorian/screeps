@@ -8,12 +8,16 @@ const findHostileTarget = (creep) => {
 const roleDefender = {
 
     /** @param {Creep} creep **/
-    run: function (creep) {
+    run: (creep) => {
+        let rallyTo = Game.flags['RallyTo'] ? Game.flags['RallyTo'].pos : null;
         let hostile = Game.getObjectById(creep.memory.hostileId);
 
         if (!hostile) {
             //creep.memory.hostileId = null;
             hostile = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
+            if (!hostile) {
+                hostile = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+            }
             creep.memory.hostileId = (hostile && hostile.id) ? hostile.id : null;
         } else {
             let rangedAttack = creep.rangedAttack(hostile);
@@ -26,22 +30,22 @@ const roleDefender = {
             }
             if ([ERR_INVALID_TARGET, ERR_BUSY, ERR_NO_BODYPART].indexOf(rangedAttack) !== -1) {
                 creep.memory.hostileId = null;
-                creep.say('Killed it!?')
+                creep.say('Killed it?')
             }
             if (rangedAttack === OK) {
-                creep.say('Zap zap!')
+                creep.say('Zap zap!');
             }
         }
 
-        if (!creep.memory.hostileId) {
-            let rallyTo = Game.flags['RallyTo'] ? Game.flags['RallyTo'].pos : null;
+        if (!hostile && !creep.memory.hostileId) {
+
             if (rallyTo) {
                 let targetPos = new RoomPosition(rallyTo.x, rallyTo.y, rallyTo.roomName);
                 let result = creep.moveTo(targetPos);
-                console.log(`Result of creep.moveTo(new RoomPosition(${rallyTo.x}, ${rallyTo.y}, '${rallyTo.roomName}')): ${result}`);
+                //console.log(`Result of creep.moveTo(new RoomPosition(${rallyTo.x}, ${rallyTo.y}, '${rallyTo.roomName}')): ${result}`);
                 if (result === -2) {
                     const path = creep.room.findPath(creep.pos, targetPos );
-                    console.log(`Path result was: ${JSON.stringify(path)}`);
+                    //console.log(`Path result was: ${JSON.stringify(path)}`);
                 }
             }
             /*let rallyTo = Game.flags['RallyTo'] ? Game.flags['RallyTo'].pos : null;

@@ -31,7 +31,8 @@ const roleJanitor = {
                 });
                 if (!closestDamagedStructure) {
                     closestDamagedStructure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                        filter: (structure) => structure.hits < Math.min(structure.hitsMax, 50000) //(structure.hits / structure.hitsMax) <= 0.8
+                        filter: (structure) => (structure.hits < Math.min(structure.hitsMax, 50000) && structure.structureType !== STRUCTURE_CONTAINER)
+                                            || (structure.structureType === STRUCTURE_CONTAINER && structure.hits < structure.hitsMax) //(structure.hits / structure.hitsMax) <= 0.8
                                             && assignedTargets.indexOf(structure.id) === -1
                     });
                 }
