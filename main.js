@@ -163,36 +163,40 @@ module.exports.loop = function () {
             if (spawn) {
                 let energyFull = energy === energyAvailable || energy > 300;
                 let newName = 'Unknown' + Game.time;
-                if (totalHarvesters < Math.min(room.controller.level * 2, queues['energySites']['total']) && energyFull) {
+                if (totalHarvesters < Math.min(room.controller.level * 2, queues['energySites']['total'], 7) && energyFull) {
                     newName = 'Har ' + Game.time;
-                    spawn.spawnCreep( spawnBody(Math.min(energyAvailable, 500), ['WORK', 'WORK'], ['CARRY', 'MOVE', 'CARRY', 'MOVE', 'CARRY', 'CARRY']),
+                    spawn.spawnCreep( spawnBody(Math.min(energyAvailable, 650), ['WORK', 'WORK'], ['CARRY', 'MOVE', 'CARRY', 'MOVE', 'CARRY', 'CARRY', 'WORK', 'CARRY']),
                         newName,
                         { memory: { home: room.name, role: 'harvester', targetId: null, sourceId: null }});
                 } else if (totalButlers < 2 && energyFull) {
                     newName = 'But ' + Game.time;
-                    spawn.spawnCreep(spawnBody(Math.min(energyAvailable, 400), ['CARRY', 'CARRY'], ['MOVE', 'MOVE', 'CARRY']),
+                    spawn.spawnCreep(spawnBody(Math.min(energyAvailable, 400), ['CARRY', 'CARRY'], ['MOVE', 'MOVE', 'CARRY', 'MOVE', 'MOVE']),
                         newName,
                         {memory: {home: room.name, role: 'butler', targetId: null, sourceId: null}});
-                } else if (upgraders.length < ((room.controller.level < 5) ? 3 : 1) && energyFull) {
+                } else if (upgraders.length < ((room.controller.level < 5) ? 4 : (room.controller.level === 8 ? 1 : 2)) && energyFull) {
                     newName = 'Upg ' + Game.time;
-                    spawn.spawnCreep( spawnBody(Math.min(energyAvailable, 450), ['WORK', 'WORK'], ['CARRY', 'MOVE', 'CARRY', 'CARRY']),
+                    spawn.spawnCreep( spawnBody(Math.min(energyAvailable, 600), ['WORK', 'WORK'], ['CARRY', 'MOVE', 'CARRY', 'CARRY', 'MOVE', 'CARRY', 'CARRY', 'CARRY', 'CARRY']),
                         newName,
                         { memory: { home: room.name, role: 'upgrader', sourceId: null }});
                 } else if (builders.length < Math.max((Game.flags['sendBuilders'] ? 8 : 0), Math.min(queues.constructionSites.length, 3)) && energyFull) {
                     newName = 'Bld ' + Game.time;
-                    spawn.spawnCreep( spawnBody(Math.min(energyAvailable, 550), ['WORK', 'WORK'], ['CARRY', 'MOVE', 'CARRY', 'CARRY', 'MOVE']),
+                    spawn.spawnCreep( spawnBody(Math.min(energyAvailable, 550), ['WORK', 'WORK'], ['CARRY', 'MOVE', 'CARRY', 'CARRY', 'MOVE', 'CARRY', 'CARRY']),
                         newName,
                         { memory: { home: room.name, role: 'builder', targetId: null, sourceId: null }});
                 } else if (totalJanitors < 1 && energyFull) {
                     newName = 'Jan ' + Game.time;
-                    spawn.spawnCreep(spawnBody(Math.min(energyAvailable, 500), ['WORK', 'WORK'], ['CARRY', 'MOVE', 'MOVE', 'CARRY']),
+                    spawn.spawnCreep(spawnBody(Math.min(energyAvailable, 500), ['WORK', 'WORK'], ['CARRY', 'MOVE', 'MOVE', 'CARRY', 'CARRY', 'MOVE']),
                         newName,
                         {memory: {home: room.name, role: 'janitor', targetId: null, sourceId: null}});
                 } else if (totalDefenders < Math.max(1, queues.hostileCreeps.length * 2) && energyFull) {
                     newName = 'Def ' + Game.time;
-                    spawn.spawnCreep( spawnBody(Math.min(energyAvailable, 490), ['RANGED_ATTACK'], ['MOVE', 'RANGED_ATTACK'], ['TOUGH']),
+                    spawn.spawnCreep( spawnBody(Math.min(energyAvailable, 890), ['RANGED_ATTACK', 'RANGED_ATTACK'],
+                                                                            ['MOVE', 'RANGED_ATTACK', 'CARRY', 'MOVE', 'MOVE', 'MOVE',
+                                                                                       'MOVE', 'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH',
+                                                                                       'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH', 'TOUGH',
+                                                                                       'TOUGH', 'TOUGH'], ['TOUGH']),
                         newName,
-                        { memory: { home: room.name, role: 'defender', hostileId: null }});
+                        { memory: { home: room.name, role: 'defender', hostileId: null, targetId: null, looting: false }});
                 }
                 if (totalHarvesters === 0 /*&& !energyFull*/) { // try to buy cheap harvester
                     newName = '!Har ' + Game.time;

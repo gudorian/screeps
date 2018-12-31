@@ -11,9 +11,16 @@ let creepHeatmaps = {};
 const canMoveToPos = (room, x, y) => {
     let roomPos = new RoomPosition(x, y, room.name);
     //console.log(roomPos);
+    //const road = roomPos.lookFor()
     const terrain = new Room.Terrain(room.name);
     switch(terrain.get(x, y)) {
         case TERRAIN_MASK_WALL:
+            const structures = roomPos.lookFor(LOOK_STRUCTURES);
+            if (structures.length && _.filter(structures, (s) => s.structureType === STRUCTURE_ROAD)) {
+                room.visual.circle(roomPos,
+                    {fill: 'yellow', radius: 0.15, stroke: 'orange'});
+                return true;
+            }
             room.visual.circle(roomPos,
                 {fill: 'red', radius: 0.15, stroke: 'red'});
             return false;

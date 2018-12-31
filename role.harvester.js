@@ -72,9 +72,9 @@ const roleHarvester = {
             }
             if (target) {
                 if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    let moved = creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+                    let moved = creep.moveTo(target, {reusePath: 10, visualizePathStyle: {stroke: '#ffffff'}});
                     if (moved === ERR_NO_PATH) {
-                        target = null;
+                        creep.memory.targetId = null;
                     }
                 }
             }

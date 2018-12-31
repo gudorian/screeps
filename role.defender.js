@@ -5,6 +5,77 @@ const findHostileTarget = (creep) => {
     }
 };
 
+const jobLoot = (creep) => {
+    let target = Game.getObjectById(creep.memory.targetId);
+    if (!target) {
+        target = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
+        if (!target) {
+            target = creep.pos.findClosestByPath(FIND_TOMBSTONES);
+        }
+        creep.memory.targetId = (target && target.id) ? target.id : null;
+        //console.log(creep.memory.targetId);
+    }
+
+    if (target && _.sum(creep.carry) < creep.carryCapacity) {
+        console.log('loot');
+        creep.memory['looting'] = true;
+        let pickup = creep.pickup(target);
+        console.log(pickup);
+        if (pickup === ERR_NOT_IN_RANGE) {
+            let moved = creep.moveTo(target, {visualizePathStyle: {stroke: 'blue'}});
+            creep.say('Fetch loot!');
+            if (moved === ERR_NO_PATH) {
+                creep.memory.targetId = null;
+            }
+        } else if (pickup === ERR_INVALID_TARGET) {
+            let withdraw = creep.withdraw(target, RESOURCE_ENERGY);
+            if (withdraw === ERR_NOT_IN_RANGE) {
+                let moved = creep.moveTo(target, {visualizePathStyle: {stroke: 'teal'}});
+                creep.say('Go loot!');
+                if (moved === ERR_NO_PATH) {
+                    creep.memory.targetId = null;
+                }
+            } else if (withdraw === ERR_INVALID_TARGET) {
+                creep.memory.targetId = null;
+            }
+        } else {
+            creep.memory.targetId = null;
+        }
+    } else {
+        creep.memory.looting = false;
+    }
+};
+
+const jobDeposit = (creep) => {
+    let target = Game.getObjectById(creep.memory.targetId);
+    if (!target) {
+        target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+            filter: (structure) => {
+                return (structure.structureType === STRUCTURE_CONTAINER
+                    || structure.structureType === STRUCTURE_STORAGE
+                ) && _.sum(structure.store) < structure.storeCapacity;
+            }
+        });
+        if (!target) {
+            target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                filter: (structure) => {
+                    return (structure.structureType === STRUCTURE_EXTENSION
+                        || structure.structureType === STRUCTURE_SPAWN) && structure.energy < structure.energyCapacity;
+                }
+            });
+        }
+        creep.memory.targetId = target && target.id ? target.id : null;
+    }
+    if (target) {
+        if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            let moved = creep.moveTo(target, {visualizePathStyle: {stroke: 'lime'}});
+            if (moved === ERR_NO_PATH) {
+                creep.memory.targetId = null;
+            }
+        }
+    }
+};
+
 const roleDefender = {
 
     /** @param {Creep} creep **/
@@ -38,41 +109,27 @@ const roleDefender = {
         }
 
         if (!hostile && !creep.memory.hostileId) {
-
-            if (rallyTo) {
+            if (_.sum(creep.carry) === creep.carryCapacity) {
+                creep.memory.targetId = null;
+            }
+            if (creep.memory['looting'] || (!creep.memory.targetId && _.sum(creep.carry) <= 0)) {
+                jobLoot(creep);
+            }
+            else if (!creep.memory['looting'] && _.sum(creep.carry) > 0) {
+                jobDeposit(creep);
+            }
+            else if (rallyTo) {
+                creep.memory.targetId = null;
                 let targetPos = new RoomPosition(rallyTo.x, rallyTo.y, rallyTo.roomName);
                 let result = creep.moveTo(targetPos);
                 //console.log(`Result of creep.moveTo(new RoomPosition(${rallyTo.x}, ${rallyTo.y}, '${rallyTo.roomName}')): ${result}`);
                 if (result === -2) {
-                    const path = creep.room.findPath(creep.pos, targetPos );
+                    //const path = creep.room.findPath(creep.pos, targetPos );
                     //console.log(`Path result was: ${JSON.stringify(path)}`);
                 }
-            }
-            /*let rallyTo = Game.flags['RallyTo'] ? Game.flags['RallyTo'].pos : null;
-            if (creep.memory['explored'] === undefined) {
-                creep.memory['explored'] = 0;
-            }
-
-            console.log(rallyTo, creep.room.name, creep.pos);
-            //console.log(JSON.stringify(rallyTo));
-
-            //creep.moveTo(Game.flags['Flag1']);
-            if (rallyTo && creep.memory['explored'] < 1) {
-                let move = creep.moveTo(rallyTo, {visualizePathStyle: {stroke: 'orange'}, reusePath: 10 });
-                console.log(move);
-                creep.say('Exploring')
-                if (move === ERR_NO_PATH) {
-                    creep.say('NO PATH!');
-                    creep.moveTo(rallyTo.x, rallyTo.y);
-                    creep.memory['explored'] = creep.memory['explored'] + 1;
-                }
-
             } else {
-                creep.say('Chilling');
-                creep.memory['explored'] = 0;
-                //creep.move(RIGHT);
-                //creep.moveTo(Game.flags['Flag2']);
-            }*/
+                creep.memory.targetId = null;
+            }
         }
     }
 };
